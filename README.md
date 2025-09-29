@@ -33,6 +33,7 @@ The aim of the project is to:
    ```bash
    git clone https://github.com/CourtneyBritney/WEDEPART1.git
 
+
 Open the project folder.
 
 Double-click index.html to view in your browser.
