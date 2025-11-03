@@ -1,67 +1,228 @@
+/* =========================
+   BCook – Part 3 Enhancements
+   - Lightbox for gallery
+   - Services filter
+   - Form validation (contact + enquiry)
+   (marker: BCOOK_PART23_JS)
+   ========================= */
 
+document.addEventListener("DOMContentLoaded", () => {
+  setupLightbox();
+  setupServiceFilter();
+  setupFormValidation("#contact-form");
+  setupFormValidation("#enquiry-form");
+});
+
+function setupLightbox() {
+  const imgs = document.querySelectorAll(".gallery-grid img");
+  if (!imgs.length) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "lightbox-overlay";
+  overlay.innerHTML = `
+    <div class="lightbox-inner" role="dialog" aria-modal="true" aria-label="Image preview">
+      <button class="lightbox-close" aria-label="Close">&times;</button>
+      <img alt="Full view">
+      <p class="lightbox-caption"></p>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const full = overlay.querySelector("img");
+  const caption = overlay.querySelector(".lightbox-caption");
+  const close = overlay.querySelector(".lightbox-close");
+
+  const open = (src, text) => {
+    full.src = src;
+    caption.textContent = text || "";
+    overlay.classList.add("open");
+    close.focus();
+  };
+  const hide = () => overlay.classList.remove("open");
+
+  imgs.forEach(img => {
+    img.style.cursor = "zoom-in";
+    img.addEventListener("click", () => open(img.src, img.alt));
+  });
+  overlay.addEventListener("click", e => { if (e.target === overlay || e.target === close) hide(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+}
+
+function setupServiceFilter() {
+  const input = document.querySelector("#service-filter");
+  const cards = document.querySelectorAll(".services .service");
+  if (!input || !cards.length) return;
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+    cards.forEach(c => {
+      const text = c.textContent.toLowerCase();
+      c.style.display = text.includes(q) ? "" : "none";
+    });
+  });
+}
+
+function setupFormValidation(selector) {
+  const form = document.querySelector(selector);
+  if (!form) return;
+
+  const showErr = (el, msg) => {
+    let hint = el.parentElement.querySelector(".field-error");
+    if (!hint) {
+      hint = document.createElement("div");
+      hint.className = "field-error";
+      el.parentElement.appendChild(hint);
+    }
+    hint.textContent = msg;
+    el.setAttribute("aria-invalid", "true");
+  };
+
+  const clearErr = (el) => {
+    const hint = el.parentElement.querySelector(".field-error");
+    if (hint) hint.textContent = "";
+    el.removeAttribute("aria-invalid");
+  };
+
+  form.addEventListener("submit", (e) => {
+    let ok = true;
+
+    form.querySelectorAll("[required]").forEach(el => {
+      if (!el.value.trim()) { ok = false; showErr(el, "This field is required."); }
+      else clearErr(el);
+    });
+
+    const email = form.querySelector('input[type="email"]');
+    if (email && email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+      ok = false; showErr(email, "Enter a valid email address.");
+    }
+
+    const name = form.querySelector('#name');
+    if (name && name.value.trim().length < 3) {
+      ok = false; showErr(name, "Name must be at least 3 characters.");
+    }
+
+    if (!ok) {
+      e.preventDefault();
+      form.querySelector('[aria-invalid="true"]')?.focus();
+      return;
+    }
+
+    e.preventDefault();
+    form.reset();
+    alert("Thanks! Your form was submitted successfully.");
+  });
+
+  form.querySelectorAll("input, textarea, select").forEach(el => {
+    el.addEventListener("input", () => clearErr(el));
+    el.addEventListener("blur", () => { if (el.value.trim()) clearErr(el); });
+  });
+}
+
+
+/* Mobile menu toggle (marker: BCOOK_MOBILE_JS) */
 (function(){
   const nav = document.querySelector('.nav');
   const btn = document.querySelector('.nav-toggle');
-  if(nav && btn){
-    btn.addEventListener('click', ()=>{
-      const open = nav.classList.toggle('open');
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-  }
+  if(!nav || !btn) return;
+  btn.addEventListener('click', ()=>{
+    const open = nav.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
 })();
-// Lightbox
+
+
+/* Animations: Option B (marker: BCOOK_ANIM_B_JS) */
+(function(){
+  // Scroll reveal for cards, gallery thumbs, and services
+  const targets = Array.from(document.querySelectorAll('.card, .gallery-grid .thumb, .services .service'));
+  targets.forEach(el => el.classList.add('reveal'));
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('reveal-in');
+        io.unobserve(e.target);
+      }
+    });
+  }, {rootMargin:'0px 0px -10% 0px', threshold:0.1});
+  targets.forEach(t => io.observe(t));
+
+  // Button active pop
+  document.querySelectorAll('.button').forEach(btn=>{
+    btn.addEventListener('mousedown', ()=> btn.style.transform='scale(.98)');
+    ['mouseup','mouseleave','blur'].forEach(ev=>btn.addEventListener(ev, ()=> btn.style.transform=''));
+  });
+})();
+
+
+/* Lightbox hardening (marker: BCOOK_LIGHTBOX_FIX) */
+(function(){
+  const ensureOverlay = () => {
+    let overlay = document.querySelector('.lightbox-overlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.className = 'lightbox-overlay';
+    overlay.innerHTML = "<div class='lightbox-inner' role='dialog' aria-modal='true' aria-label='Image preview'>\
+<button class='lightbox-close' aria-label='Close'>&times;</button>\
+<img alt='Full view'><p class='lightbox-caption'></p></div>";
+    document.body.appendChild(overlay);
+    return overlay;
+  };
+  function init(){
+    const imgs = document.querySelectorAll(".gallery-grid img, .thumb img");
+    if(!imgs.length) return;
+    const overlay = ensureOverlay();
+    const full = overlay.querySelector("img");
+    const caption = overlay.querySelector(".lightbox-caption");
+    const close = overlay.querySelector(".lightbox-close");
+    const open = (src,text)=>{ full.src = src; caption.textContent = text||""; overlay.classList.add("open"); close.focus(); };
+    const hide = ()=> overlay.classList.remove("open");
+    imgs.forEach(img=>{
+      img.style.cursor="zoom-in";
+      img.addEventListener("click",()=>{
+        const big = img.getAttribute("data-full") || img.currentSrc || img.src;
+        open(big, img.alt || "");
+      });
+    });
+    overlay.addEventListener("click",e=>{ if(e.target===overlay||e.target===close) hide(); });
+    document.addEventListener("keydown",e=>{ if(e.key==="Escape") hide(); });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+
+
+/* CLICK_FIX ensure listeners (BCOOK_OVERLAY_FIX) */
 (function(){
   function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   ready(function(){
+    // create overlay if missing
     let overlay = document.querySelector('.lightbox-overlay');
     if(!overlay){
       overlay = document.createElement('div');
       overlay.className = 'lightbox-overlay';
-      overlay.innerHTML = "<div class='lightbox-inner' role='dialog' aria-modal='true' aria-label='Image preview'><button class='lightbox-close' aria-label='Close'>&times;</button><img alt='Full view'><p class='lightbox-caption'></p></div>";
+      overlay.innerHTML = "<div class='lightbox-inner'><button class='lightbox-close' aria-label='Close'>&times;</button><img alt='Full view'><p class='lightbox-caption'></p></div>";
       document.body.appendChild(overlay);
     }
     const full = overlay.querySelector('img');
     const caption = overlay.querySelector('.lightbox-caption');
     const close = overlay.querySelector('.lightbox-close');
-    const open = (src,text)=>{ full.src = src; caption.textContent = text||""; overlay.classList.add("open"); close.focus(); };
-    const hide = ()=> overlay.classList.remove("open");
-    overlay.addEventListener("click",e=>{ if(e.target===overlay||e.target===close) hide(); });
-    document.addEventListener("keydown",e=>{ if(e.key==="Escape") hide(); });
-    document.querySelectorAll(".gallery-grid img, .thumb img").forEach(img=>{
-      img.style.cursor="zoom-in";
-      img.addEventListener("click",()=>{
-        const big = img.getAttribute("data-full") || img.currentSrc || img.src;
-        open(big, img.alt || "");
+    function open(src, text){ full.src = src; caption.textContent = text||''; overlay.classList.add('open'); }
+    function hide(){ overlay.classList.remove('open'); }
+    overlay.addEventListener('click', e=>{ if(e.target===overlay || e.target===close) hide(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape') hide(); });
+
+    // bind clicks
+    document.querySelectorAll('.gallery-grid img, .thumb img').forEach(img=>{
+      img.style.cursor='zoom-in';
+      img.addEventListener('click', ()=>{
+        const big = img.getAttribute('data-full') || img.currentSrc || img.src;
+        open(big, img.alt||'');
       }, {passive:true});
     });
   });
 })();
-// Search
-(function(){
-  const dataEl = document.getElementById('search-data');
-  if(!dataEl) return;
-  const data = JSON.parse(dataEl.textContent || "[]");
-  const params = new URLSearchParams(window.location.search);
-  const qInput = document.getElementById('q');
-  const results = document.getElementById('results');
-  function render(hits){
-    if(!hits.length){results.innerHTML="<p>No results found.</p>";return;}
-    results.innerHTML = hits.map(h=>`
-      <article class="result card">
-        <h3><a href="${h.url}">${h.title}</a></h3>
-        <p>${h.snippet}</p>
-        <p><a class="button" href="${h.url}">Open</a></p>
-      </article>`).join("");
-  }
-  function filter(q){
-    q = (q||'').trim().toLowerCase();
-    if(!q) return data.slice(0, 20);
-    return data.filter(h => (h.title + ' ' + h.snippet).toLowerCase().includes(q)).slice(0,50);
-  }
-  const initial = params.get('q')||''; qInput.value = initial; render(filter(initial));
-  qInput.addEventListener('input', ()=>{ const v=qInput.value; const u=new URL(window.location); if(v)u.searchParams.set('q',v); else u.searchParams.delete('q'); history.replaceState(null,'',u); render(filter(v)); });
-})();
-// Form Validation
+
+
+/* === Real-time validation & feedback (BCOOK_FORM_FEEDBACK) === */
 (function(){
   function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   function showToast(msg){
@@ -91,6 +252,7 @@
   }
   ready(function(){
     document.querySelectorAll('form').forEach(function(form){
+      // Enhance fields
       form.querySelectorAll('input,select,textarea').forEach(function(el){
         el.addEventListener('input', ()=>validateField(el), {passive:true});
         el.addEventListener('blur', ()=>validateField(el));
@@ -101,6 +263,7 @@
           const v = validateField(el); if(!v && !firstBad) firstBad=el; ok = ok && v;
         });
         if(!ok){ e.preventDefault(); if(firstBad) firstBad.focus(); return; }
+        // Simulate async submit for local demo
         e.preventDefault();
         setTimeout(function(){
           form.reset();
