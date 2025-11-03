@@ -112,3 +112,78 @@ Updated file structure to include /css, /html, and /img folders for better organ
 📜 License
 
 This project is for educational purposes only and is not intended for commercial use.
+
+⚙️ Part 3 — Interactivity and Advanced Features
+
+Gallery Lightbox: Click images to enlarge in modal view.
+
+Search Functionality: Client-side JS search across site pages.
+
+Form Validation: Real-time validation with user feedback and success toast.
+
+Google Map Embed: Added Sandton map in Contact page.
+
+Social Media Integration: Instagram (@cc_cartier) & YouTube (@courtneyalexander3758).
+
+Mobile Menu: Collapsible hamburger navigation for smaller screens.
+
+Security & SEO:
+
+Added Content Security Policy (CSP).
+
+Included robots.txt and sitemap.xml.
+
+Added meta tags and descriptive alt text.
+
+Performance Optimization:
+
+Lazy loading of images.
+
+Consolidated CSS/JS files.
+
+Lightweight, accessible markup.
+
+💬 User Experience Enhancements
+
+Instant visual feedback for forms.
+
+Accessible navigation with ARIA labels and semantic tags.
+
+Consistent look and feel across all devices.
+
+Intuitive link flow between pages.
+
+🔒 Security & SEO Measures
+
+CSP header to prevent XSS attacks.
+
+Sanitized navigation and embedded maps.
+
+SEO-optimized meta descriptions.
+
+Sitemap for search engines.
+
+🛠️ Tools Used
+
+HTML5
+
+CSS3 (Flexbox & Grid)
+
+Vanilla JavaScript (ES6)
+
+Pillow (for placeholder images)
+
+📈 Future Improvements
+
+Integrate backend to handle real form submissions.
+
+Add login/registration pages.
+
+Include recipe database and user comments.
+
+Connect analytics for tracking interactions.
+
+👏 Credits
+
+Developed by Courtney Alexander as part of the Web Development Project (Part 1–3).
+All placeholder images were auto-generated for demonstration purposes.
